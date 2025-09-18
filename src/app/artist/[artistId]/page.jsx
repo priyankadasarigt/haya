@@ -4,7 +4,7 @@ import SongCard from "@/components/Homepage/SongCard";
 import SongListSkeleton from "@/components/SongListSkeleton";
 import SongList from "@/components/SongsList";
 import { setProgress } from "@/redux/features/loadingBarSlice";
-import { getArtistAlbums, getArtistData, getArtistSongs } from "@/services/dataAPI";
+import { getArtistAlbums, getArtistData, getArtistSongs } from "@/services/dataAPI"; // Updated API call with pagination
 import Image from "next/image";
 import React from "react";
 import { useEffect } from "react";
@@ -27,10 +27,10 @@ const page = ({ params }) => {
       const details = await getArtistData(params.artistId);
       dispatch(setProgress(60));
       setArtistDetails(details);
-      const songs = await getArtistSongs(params.artistId, songPage, 10);
+      const songs = await getArtistSongs(params.artistId, songPage, 10); // Updated for pagination
       dispatch(setProgress(90));
       setArtistSongs(songs);
-      const albums = await getArtistAlbums(params.artistId, albumPage, 10);
+      const albums = await getArtistAlbums(params.artistId, albumPage, 10); // Updated for pagination
       setArtistAlbums(albums?.albums);
       dispatch(setProgress(100));
       setLoading(false);
@@ -41,7 +41,7 @@ const page = ({ params }) => {
   // Load more songs
   const handleLoadMoreSongs = async () => {
     const nextPage = songPage + 1;
-    const songs = await getArtistSongs(params.artistId, nextPage, 10);
+    const songs = await getArtistSongs(params.artistId, nextPage, 10); // Pass page and limit for pagination
     if (songs?.length > 0) {
       setArtistSongs((prevSongs) => [...prevSongs, ...songs]);
       setSongPage(nextPage);
@@ -51,7 +51,7 @@ const page = ({ params }) => {
   // Load more albums
   const handleLoadMoreAlbums = async () => {
     const nextPage = albumPage + 1;
-    const albums = await getArtistAlbums(params.artistId, nextPage, 10);
+    const albums = await getArtistAlbums(params.artistId, nextPage, 10); // Pass page and limit for pagination
     if (albums?.albums?.length > 0) {
       setArtistAlbums((prevAlbums) => [...prevAlbums, ...albums.albums]);
       setAlbumPage(nextPage);
