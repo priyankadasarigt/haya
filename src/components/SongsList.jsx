@@ -8,6 +8,7 @@ import { BiHeadphone } from "react-icons/bi";
 import { PiDotsThreeVerticalBold } from "react-icons/pi";
 import { toast } from "react-hot-toast";
 import { addSongToPlaylist, deleteSongFromPlaylist, getUserPlaylists } from "@/services/playlistApi";
+import { getSongData } from "@/services/dataAPI"; // Ensure pagination is used from this API
 
 const SongsList = ({
   SongData,
@@ -44,7 +45,7 @@ const SongsList = ({
   // Function to load more songs based on pagination
   const handleLoadMore = async () => {
     const nextPage = currentPage + 1;
-    const res = await getSongData(nextPage); // Assuming getSongData can accept the page parameter
+    const res = await getSongData(nextPage, 10); // Pass page and limit
     if (res?.data) {
       setSongsData((prevSongs) => [...prevSongs, ...res.data]);  // Appending new songs to the list
       setCurrentPage(nextPage);
