@@ -4,11 +4,7 @@ import SongCard from "@/components/Homepage/SongCard";
 import SongListSkeleton from "@/components/SongListSkeleton";
 import SongList from "@/components/SongsList";
 import { setProgress } from "@/redux/features/loadingBarSlice";
-import {
-  getArtistAlbums,
-  getArtistData,
-  getArtistSongs,
-} from "@/services/dataAPI";
+import { getArtistAlbums, getArtistData, getArtistSongs } from "@/services/dataAPI";
 import Image from "next/image";
 import React from "react";
 import { useEffect } from "react";
@@ -22,25 +18,45 @@ const page = ({ params }) => {
   const [artistSongs, setArtistSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [artistAlbums, setArtistAlbums] = useState([]);
+  const [songPage, setSongPage] = useState(1);  // Tracking the current page for songs
+  const [albumPage, setAlbumPage] = useState(1);  // Tracking the current page for albums
 
   useEffect(() => {
     const fetchData = async () => {
       dispatch(setProgress(30));
       const details = await getArtistData(params.artistId);
-      // console.log("details", details);
       dispatch(setProgress(60));
       setArtistDetails(details);
-      const songs = await getArtistSongs(params.artistId, 1);
+      const songs = await getArtistSongs(params.artistId, songPage, 10);
       dispatch(setProgress(90));
       setArtistSongs(songs);
-      const albums = await getArtistAlbums(params.artistId, 1);
+      const albums = await getArtistAlbums(params.artistId, albumPage, 10);
       setArtistAlbums(albums?.albums);
-      console.log("cccc", albums.albums);
       dispatch(setProgress(100));
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [songPage, albumPage]);
+
+  // Load more songs
+  const handleLoadMoreSongs = async () => {
+    const nextPage = songPage + 1;
+    const songs = await getArtistSongs(params.artistId, nextPage, 10);
+    if (songs?.length > 0) {
+      setArtistSongs((prevSongs) => [...prevSongs, ...songs]);
+      setSongPage(nextPage);
+    }
+  };
+
+  // Load more albums
+  const handleLoadMoreAlbums = async () => {
+    const nextPage = albumPage + 1;
+    const albums = await getArtistAlbums(params.artistId, nextPage, 10);
+    if (albums?.albums?.length > 0) {
+      setArtistAlbums((prevAlbums) => [...prevAlbums, ...albums.albums]);
+      setAlbumPage(nextPage);
+    }
+  };
 
   return (
     <div className="w-11/12 m-auto">
@@ -76,22 +92,14 @@ const page = ({ params }) => {
         )}
 
         <div className=" lg:ml-10 text-gray-100 mt-12 flex flex-col gap-y-2">
-          <h1 className="text-2xl lg:text-4xl font-bold">
-            {artistDetails?.name}
-          </h1>
+          <h1 className="text-2xl lg:text-4xl font-bold">{artistDetails?.name}</h1>
           <div className="flex gap-2 capitalize ml-2">
-            <h2 className="lg:text-xl font-semibold">
-              {artistDetails?.dominantType}
-            </h2>
+            <h2 className="lg:text-xl font-semibold">{artistDetails?.dominantType}</h2>
             <p className="lg:text-xl font-semibold">|</p>
-            <h4 className="lg:text-xl font-semibold">
-              {artistDetails?.dominantLanguage}
-            </h4>
+            <h4 className="lg:text-xl font-semibold">{artistDetails?.dominantLanguage}</h4>
           </div>
           <ul className="flex items-center gap-3 text-gray-300">
-            <li className=" text-sm lg:text-lg font-semibold">
-              • {artistDetails?.fanCount} listners
-            </li>
+            <li className=" text-sm lg:text-lg font-semibold">• {artistDetails?.fanCount} listeners</li>
           </ul>
         </div>
       </div>
@@ -103,6 +111,14 @@ const page = ({ params }) => {
         ) : (
           <div>
             <SongList SongData={artistSongs?.songs} />
+            {artistSongs?.songs.length > 0 && (
+              <button
+                onClick={handleLoadMoreSongs}
+                className="w-full py-2 mt-4 text-center bg-gray-800 text-white rounded-full"
+              >
+                View More Songs
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -115,6 +131,14 @@ const page = ({ params }) => {
             </SwiperSlide>
           ))}
         </SwiperLayout>
+        {artistAlbums?.length > 0 && (
+          <button
+            onClick={handleLoadMoreAlbums}
+            className="w-full py-2 mt-4 text-center bg-gray-800 text-white rounded-full"
+          >
+            View More Albums
+          </button>
+        )}
       </div>
     </div>
   );
