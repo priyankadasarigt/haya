@@ -8,7 +8,7 @@ import { BiHeadphone } from "react-icons/bi";
 import { PiDotsThreeVerticalBold } from "react-icons/pi";
 import { toast } from "react-hot-toast";
 import { addSongToPlaylist, deleteSongFromPlaylist, getUserPlaylists } from "@/services/playlistApi";
-import { getSongData } from "@/services/dataAPI"; // Ensure pagination is used from this API
+import { getSongData } from "@/services/dataAPI"; // Updated to handle pagination
 
 const SongsList = ({
   SongData,
@@ -21,7 +21,7 @@ const SongsList = ({
   const { activeSong } = useSelector((state) => state.player);
   const [showMenu, setShowMenu] = useState(false);
   const [playlists, setPlaylists] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);  // Tracking the current page
+  const [currentPage, setCurrentPage] = useState(1);  // Tracking current page for songs
   const [songs, setSongsData] = useState(SongData); // Initial song data
 
   const dispatch = useDispatch();
@@ -45,9 +45,9 @@ const SongsList = ({
   // Function to load more songs based on pagination
   const handleLoadMore = async () => {
     const nextPage = currentPage + 1;
-    const res = await getSongData(nextPage, 10); // Pass page and limit
+    const res = await getSongData(nextPage, 10); // Pass page and limit for pagination
     if (res?.data) {
-      setSongsData((prevSongs) => [...prevSongs, ...res.data]);  // Appending new songs to the list
+      setSongsData((prevSongs) => [...prevSongs, ...res.data]);  // Append new songs
       setCurrentPage(nextPage);
     } else {
       toast.error("No more songs available.");
