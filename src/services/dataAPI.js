@@ -1,208 +1,157 @@
-// home page data
+// src/services/dataAPI.js
+
+// NOTE: All functions expect NEXT_PUBLIC_SAAVN_API in .env(.local)
+// Example: NEXT_PUBLIC_SAAVN_API=https://jiosaavn-api-sigma-sandy.vercel.app
+
+const BASE = process.env.NEXT_PUBLIC_SAAVN_API;
+
+// ----------------------
+// Home / Modules
+// ----------------------
 export async function homePageData(language) {
   try {
-    const response = await fetch(
-      `${"https://jiosaavn-api-sigma-sandy.vercel.app"}/modules?language=${language.toString()}`,
-      {
-        next: {
-          revalidate: 14400,
-        },
-      }
+    const res = await fetch(
+      `${BASE}/modules?language=${encodeURIComponent(language?.toString?.() ?? "english")}`,
+      { next: { revalidate: 14400 } }
     );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const json = await res.json();
+    return json?.data;
+  } catch (e) {
+    console.log(e);
+    return null;
   }
 }
 
-// get song data
+// ----------------------
+// Entities by ID
+// ----------------------
 export async function getSongData(id) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}`
-    );
-    const data = await response.json();
-    console.log("song data", data);
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const res = await fetch(`${BASE}/api/songs?id=${encodeURIComponent(id)}`);
+    const json = await res.json();
+    return json?.data;
+  } catch (e) {
+    console.log(e);
+    return null;
   }
 }
 
-// get album data
 export async function getAlbumData(id) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/albums?id=${id}`
-    );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const res = await fetch(`${BASE}/api/albums?id=${encodeURIComponent(id)}&limit=50`);
+    const json = await res.json();
+    return json?.data;
+  } catch (e) {
+    console.log(e);
+    return null;
   }
 }
 
-// get playlist data
-export async function getplaylistData(id) {
+export async function getPlaylistData(id, limit = 50) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/playlists?id=${id}&limit=50`
-    );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const res = await fetch(`${BASE}/api/playlists?id=${encodeURIComponent(id)}&limit=${limit}`);
+    const json = await res.json();
+    return json?.data;
+  } catch (e) {
+    console.log(e);
+    return null;
   }
 }
 
-// get Lyrics data
-export async function getlyricsData(id) {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${id}/lyrics`
-    );
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-// get artist data
+// ----------------------
+// Artist (details + paginated songs & albums)
+// ----------------------
 export async function getArtistData(id) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists?id=${id}`
+    const res = await fetch(`${BASE}/api/artists/${encodeURIComponent(id)}`);
+    const json = await res.json();
+    return json?.data;
+  } catch (e) {
+    console.log(e);
+    return null;
+  }
+}
+
+export async function getArtistSongs(id, page = 1, limit = 20) {
+  try {
+    const res = await fetch(
+      `${BASE}/api/artists/${encodeURIComponent(id)}/songs?page=${page}&limit=${limit}`
     );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const json = await res.json();
+    // many proxies return { data: { songs: [...] } } or { data: [...] }
+    return json?.data?.songs ?? json?.data ?? [];
+  } catch (e) {
+    console.log(e);
+    return [];
   }
 }
 
-// get artist songs
-export async function getArtistSongs(id, page) {
+export async function getArtistAlbums(id, page = 1, limit = 20) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/songs?page=${page}&`
+    const res = await fetch(
+      `${BASE}/api/artists/${encodeURIComponent(id)}/albums?page=${page}&limit=${limit}`
     );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const json = await res.json();
+    // many proxies return { data: { albums: [...] } } or { data: [...] }
+    return json?.data?.albums ?? json?.data ?? [];
+  } catch (e) {
+    console.log(e);
+    return [];
   }
 }
 
-// get artist albums
-export async function getArtistAlbums(id, page) {
+// ----------------------
+// Search with pagination (AVOIDS "only 3 items" issue)
+// Call per-type endpoints instead of a single “search all”
+// ----------------------
+export async function searchSongs(query, page = 1, limit = 20) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/artists/${id}/albums?page=${page}`
+    const res = await fetch(
+      `${BASE}/api/search/songs?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
     );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log("album error", error);
+    const json = await res.json();
+    return json?.data ?? [];
+  } catch (e) {
+    console.log(e);
+    return [];
   }
 }
 
-// get search data
-export async function getSearchedData(query) {
+export async function searchAlbums(query, page = 1, limit = 20) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/search?query=${query}`
+    const res = await fetch(
+      `${BASE}/api/search/albums?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
     );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const json = await res.json();
+    return json?.data ?? [];
+  } catch (e) {
+    console.log(e);
+    return [];
   }
 }
 
-// add and remove from favourite
-export async function addFavourite(id) {
+export async function searchArtists(query, page = 1, limit = 20) {
   try {
-    const response = await fetch("/api/favourite", {
-      method: "POST",
-      body: JSON.stringify(id),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log("Add favourite API error", error);
-  }
-}
-
-// get favourite
-export async function getFavourite() {
-  try {
-    const response = await fetch("/api/favourite");
-    const data = await response.json();
-    return data?.data?.favourites;
-  } catch (error) {
-    console.log("Get favourite API error", error);
-  }
-}
-
-// user info
-export async function getUserInfo() {
-  try {
-    const response = await fetch("/api/userInfo");
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log("Get user info API error", error);
-  }
-}
-
-// reset password
-export async function resetPassword(password, confirmPassword, token) {
-  try {
-    const response = await fetch("/api/forgotPassword", {
-      method: "PUT",
-      body: JSON.stringify({ password, confirmPassword, token }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log("Reset password API error", error);
-  }
-}
-
-// send reset password link
-export async function sendResetPasswordLink(email) {
-  try {
-    const response = await fetch("/api/forgotPassword", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.log("Send reset password link API error", error);
-  }
-}
-
-// get  recommended songs
-export async function getRecommendedSongs(artistId, songId) {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SAAVN_API}/api/songs/${songId}/suggestions`
+    const res = await fetch(
+      `${BASE}/api/search/artists?query=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
     );
-    const data = await response.json();
-    return data?.data;
-  } catch (error) {
-    console.log(error);
+    const json = await res.json();
+    return json?.data ?? [];
+  } catch (e) {
+    console.log(e);
+    return [];
+  }
+}
+
+// ----------------------
+// Utility: safe fetch wrapper if you need it elsewhere
+// ----------------------
+export async function safeJsonFetch(url) {
+  try {
+    const res = await fetch(url);
+    return await res.json();
+  } catch (e) {
+    console.log(e);
+    return null;
   }
 }
