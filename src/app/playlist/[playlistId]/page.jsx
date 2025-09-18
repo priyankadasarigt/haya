@@ -10,15 +10,19 @@ const page = async ({ params }) => {
     if (!playlistData || playlistData.length === 0) {
       playlistData = [];  // Ensure fallback if no data is returned
     }
+    console.log('Fetched Playlist Data:', playlistData);  // Debugging the fetched data
   } catch (error) {
     console.log("Error fetching playlist data:", error);
     playlistData = [];  // Fallback in case of error
   }
 
+  // Check if the playlist data has songs and handle rendering
+  const songs = playlistData?.songs || [];
+
   return (
     <div className="w-11/12 m-auto mt-16">
       <div className="flex flex-col lg:flex-row items-center">
-        {playlistData.length === 0 ? (
+        {songs.length === 0 ? (
           <div
             role="status"
             className="space-y-8 animate-pulse md:space-y-0 md:space-x-8 md:flex md:items-center"
@@ -38,7 +42,7 @@ const page = async ({ params }) => {
         ) : (
           <div className="flex flex-col lg:flex-row items-center">
             <h2 className="text-2xl font-bold">{playlistData?.name}</h2>
-            <SongList SongData={playlistData?.songs || []} loading={false} />
+            <SongList SongData={songs} loading={false} />
           </div>
         )}
       </div>
