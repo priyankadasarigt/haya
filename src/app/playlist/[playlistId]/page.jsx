@@ -1,18 +1,24 @@
 import PlayButton from "@/components/PlayButton";
 import SongList from "@/components/SongsList";
-import { getplaylistData, homePageData } from "@/services/dataAPI";
+import { getplaylistData } from "@/services/dataAPI";
 
 const page = async ({ params }) => {
-  // const [playlistData, setPlaylistData] = useState(null);
-  // const [loading, setLoading] = useState(true);
-  // const dispatch = useDispatch();
-
-  const playlistData = await getplaylistData(params.playlistId);
+  let playlistData = [];
+  try {
+    // Fetch the playlist data
+    playlistData = await getplaylistData(params.playlistId);
+    if (!playlistData || playlistData.length === 0) {
+      playlistData = [];  // Ensure fallback if no data is returned
+    }
+  } catch (error) {
+    console.log("Error fetching playlist data:", error);
+    playlistData = [];  // Fallback in case of error
+  }
 
   return (
     <div className="w-11/12 m-auto mt-16">
-      <div className=" flex flex-col lg:flex-row items-center">
-        {false ? (
+      <div className="flex flex-col lg:flex-row items-center">
+        {playlistData.length === 0 ? (
           <div
             role="status"
             className="space-y-8 animate-pulse md:space-y-0 md:space-x-8 md:flex md:items-center"
@@ -30,43 +36,14 @@ const page = async ({ params }) => {
             </div>
           </div>
         ) : (
-          <img
-            className=" rounded-full"
-            src={playlistData?.image?.[2]?.url}
-            alt={playlistData?.title}
-            width={300}
-            height={300}
-          />
+          <div className="flex flex-col lg:flex-row items-center">
+            <h2 className="text-2xl font-bold">{playlistData?.name}</h2>
+            <SongList SongData={playlistData?.songs || []} loading={false} />
+          </div>
         )}
-
-        <div className="lg:ml-10 text-gray-100 mt-12 flex flex-col gap-2 items-center md:items-start">
-          <h1 className=" text-xl lg:text-4xl font-bold">
-            {playlistData?.name}
-          </h1>
-          <ul className="flex items-center text-center flex-col gap-3 text-gray-300">
-            <li className="text-sm font-semibold">
-              {playlistData?.description}
-            </li>
-          </ul>
-          <PlayButton songList={playlistData} />
-        </div>
-      </div>
-      <div className="mt-10 text-gray-200">
-        <h1 className="text-3xl font-bold">Songs</h1>
-        <SongList SongData={playlistData?.songs} loading={false} />
       </div>
     </div>
   );
 };
 
 export default page;
-
-// 4 hour
-export const revalidate = 14400;
-
-export async function generateStaticParams() {
-  const res = await homePageData(["english", "hindi", "punjabi"]);
-  return res?.charts?.map((playlist) => ({
-    playlistId: playlist?.id.toString(),
-  }));
-}
